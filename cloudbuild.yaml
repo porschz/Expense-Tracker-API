@@ -1,0 +1,77 @@
+steps:
+  # Install dependencies
+  - name: 'node:20-alpine'
+    entrypoint: 'npm'
+    args: ['ci']
+    id: 'install-dependencies'
+
+  # Run linter
+  - name: 'node:20-alpine'
+    entrypoint: 'npm'
+    args: ['run', 'lint']
+    id: 'lint'
+    waitFor: ['install-dependencies']
+
+  # Run tests
+  - name: 'node:20-alpine'
+    entrypoint: 'npm'
+    args: ['test']
+    id: 'test'
+    waitFor: ['install-dependencies']
+
+  # Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/$REPO_NAME:latest'
+      - '.'
+    id: 'build-image'
+    waitFor: ['lint', 'test']
+
+  # Push Docker image to GCR
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA'
+    id: 'push-image-sha'
+    waitFor: ['build-image']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/$REPO_NAME:latest'
+    id: 'push-image-latest'
+    waitFor: ['build-image']
+
+  # Optional: Deploy to Cloud Run (uncomment to enable)
+  # - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  #   entrypoint: gcloud
+  #   args:
+  #     - 'run'
+  #     - 'deploy'
+  #     - 'test-api'
+  #     - '--image'
+  #     - 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA'
+  #     - '--region'
+  #     - 'us-central1'
+  #     - '--platform'
+  #     - 'managed'
+  #     - '--allow-unauthenticated'
+  #   id: 'deploy-cloud-run'
+  #   waitFor: ['push-image-sha']
+
+# Images to be pushed to Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/$REPO_NAME:latest'
+
+# Build timeout (default is 10 minutes)
+timeout: '1200s'
+
+# Options
+options:
+  machineType: 'N1_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
