@@ -1,8 +1,9 @@
 import { IsOptional, IsDateString, IsEnum } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ExpenseCategory } from '../expense-category.enum';
+import { PaginationDto } from './pagination.dto';
 
-export class FilterExpenseDto {
+export class FilterExpenseDto extends PaginationDto {
   @ApiPropertyOptional({
     description: 'Filter expenses from this date (ISO 8601 format)',
     example: '2024-01-01',
