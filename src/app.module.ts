@@ -6,8 +6,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { AuthenticationModule } from './authentication/authentication.module';
+import { ExpenseModule } from './expense/expense.module';
 import { JwtAuthGuard } from './authentication/guards/jwt-auth.guard';
-import { User } from './model/user.model';
+import { User } from './user/user.model';
+import { Expense } from './expense/expense.model';
 
 @Module({
   imports: [
@@ -23,13 +25,14 @@ import { User } from './model/user.model';
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [User],
+        entities: [User, Expense],
         synchronize: true,
       }),
       inject: [ConfigService],
     }),
     AuthenticationModule,
     UserModule,
+    ExpenseModule,
   ],
   controllers: [AppController],
   providers: [
